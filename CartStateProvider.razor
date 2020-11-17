@@ -1,0 +1,71 @@
+﻿@using Microsoft.AspNetCore.ProtectedBrowserStorage
+@using Mirjan24.Web.Data
+@using Microsoft.JSInterop
+@using Microsoft.AspNetCore.Authorization;
+@using Microsoft.AspNetCore.Authentication.Cookies;
+@inject ProtectedLocalStorage ProtectedLocalStore
+@inject IJSRuntime runtime
+
+@if (hasLoaded)
+{
+    <CascadingValue Value="@this">
+        @ChildContent
+    </CascadingValue>
+}
+else
+{
+    <div class="spinner-border text-danger loading-style spiner-loading" role="status">
+        <span class="sr-only">Loading...</span>
+    </div>
+}
+
+@code {
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    public UserModel userModel { get; set; }
+
+    public CookieModel cookieModel { get; set; }
+
+    public bool hasLoaded;
+
+
+    [Authorize(AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme)]
+    protected override async Task OnParametersSetAsync()
+    {
+        try
+        {
+            //pobierz id uzytkownika z pamięci lokalnej
+            userModel = await ProtectedLocalStore.GetAsync<UserModel>("UserId");
+            //jeśli pamiec lokalna jest pusta..
+            if (userModel == null)
+            {
+                //utwórz nową
+                userModel = new UserModel();
+            }
+
+            cookieModel = await ProtectedLocalStore.GetAsync<CookieModel>("showModal");
+            if (cookieModel == null)
+            {
+                cookieModel = new CookieModel();
+            }
+
+            hasLoaded = true;
+        }
+        catch (Exception ex)
+        {
+            ex.ToString();
+        }
+    }
+
+    public async Task SaveUserId()
+    {
+        await ProtectedLocalStore.SetAsync("UserId", userModel);
+    }
+
+    public async Task SaveCookie()
+    {
+        await ProtectedLocalStore.SetAsync("showModal", cookieModel);
+    }
+}

@@ -1,0 +1,133 @@
+﻿@using System;
+@using System.Collections.Generic;
+@using Microsoft.AspNetCore.Authorization;
+@using Microsoft.AspNetCore.Authentication.Cookies;
+@using System.Threading.Tasks;
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Http
+@using Microsoft.Extensions.Configuration;
+@using Microsoft.AspNetCore.WebUtilities
+@using Mirjan24.ServiceLayer.DTO
+@using Serilog
+@using Microsoft.AspNetCore.Components.Routing
+@inject Mirjan24.ServiceLayer.Mirjan24ServiceClient Client
+@inject NavigationManager nav
+@inject HttpContextAccessor httpContext
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IConfiguration Conf
+@inject NavigationManager nav
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+
+    <div class="navbar-header menu-border col-md-4">
+        <a>
+            <img class="logo" src="/images/Mirjan24.svg" alt="mirjan24" />
+        </a>
+        <div class="menu-icon"></div>
+    </div>
+
+    <ul class="nav nav-tabs col-md-8" id="myTab" role="tablist">
+        @if (nav.Uri == nav.BaseUri || nav.Uri == nav.BaseUri + $"?x={CartStateProvider.userModel.UserId}")
+        {
+            <li class="nav-item" role="presentation">
+                <a class="nav-link active" id="home-tab" style="color:red;" data-toggle="tab" href="/" role="tab" aria-controls="home" aria-selected="true" @onclick="@(e => Go(""))">Moje zamówienia</a>
+            </li>
+        }
+        else
+        {
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="home-tab" data-toggle="tab" href="/" role="tab" aria-controls="home" aria-selected="false" @onclick="@(e => Go(""))">Moje zamówienia</a>
+            </li>
+        }
+
+        @if (nav.Uri == nav.BaseUri + "zwrocartykol")
+        {
+            <li class="nav-item" role="presentation">
+                <a class="nav-link active" id="profile-tab" style="color:red;" data-toggle="tab" role="tab" href="/" aria-controls="profile" aria-selected="true" @onclick="@(e => Go("zwrocartykol"))">Zwróć artykół</a>
+            </li>
+        }
+        else
+        {
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="profile-tab" data-toggle="tab" role="tab" href="/" aria-controls="profile" aria-selected="false" @onclick="@(e => Go("zwrocartykol"))">Zwróć artykół</a>
+            </li>
+        }
+
+        @if (nav.Uri == nav.BaseUri + "mojezwroty")
+        {
+            <li class="nav-item" role="presentation">
+                <a class="nav-link active" id="contact-tab" style="color:red;" data-toggle="tab" role="tab" href="/" aria-controls="contact" aria-selected="true" @onclick="@(e => Go("mojezwroty"))">Moje zwroty</a>
+            </li>
+        }
+        else
+        {
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="contact-tab" data-toggle="tab" role="tab" href="/" aria-controls="contact" aria-selected="false" @onclick="@(e => Go("mojezwroty"))">Moje zwroty</a>
+            </li>
+        }
+
+        @if (nav.Uri == nav.BaseUri + "mojedane")
+        {
+            <li class="nav-item" role="presentation">
+                <a class="nav-link active" id="contact-tab" style="color:red;" data-toggle="tab" href="/mojedane" role="tab" aria-controls="mojedane" aria-selected="true" @onclick="@(e => Go("mojedane"))">Moje dane</a>  @*@onclick="@(e => Go("mojedane"))"*@
+            </li>
+        }
+        else
+        {
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="contact-tab" data-toggle="tab" href="/mojedane" role="tab" aria-controls="mojedane" aria-selected="false" @onclick="@(e => Go("mojedane"))">Moje dane</a>  @*@onclick="@(e => Go("mojedane"))"*@
+            </li>
+        }
+
+        @if (nav.Uri == nav.BaseUri + "mojeadresy")
+        {
+            <li class="nav-item" role="presentation">
+                <a class="nav-link active" id="contact-tab" style="color:red;" data-toggle="tab" href="/" role="tab" aria-controls="contact" aria-selected="true" @onclick="@(e => Go("mojeadresy"))">Moje adresy</a>
+            </li>
+        }
+        else
+        {
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="contact-tab" data-toggle="tab" href="/" role="tab" aria-controls="contact" aria-selected="false" @onclick="@(e => Go("mojeadresy"))">Moje adresy</a>
+            </li>
+        }
+
+
+        <li style="margin-top:7px; margin-left:5px;">
+            <img style="height:15px; " src="/images/user.png"><span class="glyphicon glyphicon-user" href="/user" style="margin-right:5px;color:gray;"> @User.Claims.Single(p => p.Type == System.Security.Claims.ClaimTypes.Name).Value</span>
+            <a href="/logout?returnUrl=/">
+                <span class="glyphicon glyphicon-log-out" style="color:lightslategray"> Wyloguj</span>
+            </a>
+        </li>
+
+    </ul>
+</nav>
+
+@code {
+    private System.Security.Claims.ClaimsPrincipal User;
+    [CascadingParameter] CartStateProvider CartStateProvider { get; set; }
+
+    [Authorize(AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme)]
+    protected override void OnInitialized()
+    {
+        var authState = AuthenticationStateProvider.GetAuthenticationStateAsync();
+        User = authState.Result.User;
+    }
+
+    public async Task Go(string page)
+    {
+        nav.NavigateTo(nav.BaseUri + page, true);
+    }
+}
+
+
+@*wybór języka
+    <div class="navbar-collapse collapse d-sm-inline-flex flex-sm-row-reverse">
+        <ul class="navbar-nav flex-grow-1">
+            <li>
+                @(await Html.RenderComponentAsync<Mirjan24.Web.Pages.Language>(RenderMode.ServerPrerendered))
+            </li>
+        </ul>
+    </div>*@

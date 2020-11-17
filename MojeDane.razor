@@ -1,0 +1,462 @@
+﻿@page "/mojedane"
+
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Http
+@using Microsoft.AspNetCore.WebUtilities
+@using System.Collections.Generic;
+@using Microsoft.AspNetCore.Authorization;
+@using Microsoft.AspNetCore.Authentication.Cookies;
+@using System.Threading.Tasks;
+@using Mirjan24.Web.Data
+@using Serilog
+@using Mirjan24.ServiceLayer.DTO
+@inject IJSRuntime JSRuntime
+@inject Mirjan24.ServiceLayer.Mirjan24ServiceClient Client
+@inject NavigationManager nav
+@inject HttpContextAccessor httpContext
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<style>
+    .mj24-hr {
+        background-color: red;
+    }
+
+    .info {
+        vertical-align: inherit;
+        color: grey;
+    }
+</style>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<hr class="mb-4 mj24-hr">
+<div class="col-md-8 order-md-1 centralnie">
+    <h4 class="mb-3">
+        <font style="vertical-align: inherit;">
+            <font class="info">Dane do faktury</font>
+        </font>
+    </h4>
+    <form>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="firstName">
+                    <font style="vertical-align: inherit;">
+                        <font style="vertical-align: inherit;">Imię</font>
+                    </font>
+                </label>
+                <input type="text" class="form-control" id="firstName" placeholder="Imie" @bind-value="@model.Imie" required="">
+                <div class="invalid-feedback">
+                    Imię jest wymagane
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="lastName">
+                    <font style="vertical-align: inherit;">
+                        <font style="vertical-align: inherit;">Nazwisko</font>
+                    </font>
+                </label>
+                <input type="text" class="form-control" id="lastName" placeholder="Nazwisko" @bind-value="@model.Nazwisko" required="">
+                <div class="invalid-feedback">
+                    Nzawisko jest wymagane
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="address">
+                <font style="vertical-align: inherit;">
+                    <font style="vertical-align: inherit;">Ulica</font>
+                </font>
+            </label>
+            <div class="row">
+                <div class="col-md-6">
+                    <input type="text" class="form-control" id="address" placeholder="Nazwa ulicy" @bind-value="@model.Ulica" required="">
+                </div>
+                <div class="column">
+                    <input type="text" class="form-control" id="homeNumber" placeholder="Numer domu" @bind-value="@model.NumerDomu" required="">
+                </div>
+                <div class="column">
+                    <input type="text" class="form-control" id="homeNumber" placeholder="Numer mieszkania" @bind-value="@model.NumerMieszkania">
+                </div>
+            </div>
+            <div class="invalid-feedback">
+                Proszę wprowadzić dane swojego adresu
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <label for="zip">
+                    <font style="vertical-align: inherit;">
+                        <font style="vertical-align: inherit;">Kod pocztowy</font>
+                    </font>
+                </label>
+                <input type="text" class="form-control" id="zip" placeholder="Kod pocztowy" @bind-value="@model.KodPocztowy" required="">
+                <div class="invalid-feedback">
+                    Kod pocztowy jest wymagany
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="address2">
+                    <font style="vertical-align: inherit;">
+                        <font style="vertical-align: inherit;">Miejscowość </font>
+                    </font>
+                </label>
+                <input type="text" class="form-control" id="address2" placeholder="Miejscowość" @bind-value="@model.Miejscowość">
+            </div>
+            <div class="col-md-3 mb-3">
+                <label for="country">
+                    <font style="vertical-align: inherit;">
+                        <font style="vertical-align: inherit;">Kraj</font>
+                    </font>
+                </label>
+                <select class="custom-select d-block w-100" id="country" @onchange="Kraj" required="">
+                    <option value="">
+                        <font style="vertical-align: inherit;">
+                            <font style="vertical-align: inherit;">Wybierz...</font>
+                        </font>
+                    </option>
+                    <option>
+                        <font style="vertical-align: inherit;">
+                            <font style="vertical-align: inherit;">Polska</font>
+                        </font>
+                    </option>
+                    <option>
+                        <font style="vertical-align: inherit;">
+                            <font style="vertical-align: inherit;">Niemcy</font>
+                        </font>
+                    </option>
+                    <option>
+                        <font style="vertical-align: inherit;">
+                            <font style="vertical-align: inherit;">Czechy</font>
+                        </font>
+                    </option>
+                    <option>
+                        <font style="vertical-align: inherit;">
+                            <font style="vertical-align: inherit;">Francja</font>
+                        </font>
+                    </option>
+                    <option>
+                        <font style="vertical-align: inherit;">
+                            <font style="vertical-align: inherit;">Włochy</font>
+                        </font>
+                    </option>
+                </select>
+                <div class="invalid-feedback">
+                    Proszę wybrać kraj
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="firstName">
+                    <font style="vertical-align: inherit;">
+                        <font style="vertical-align: inherit;">Telefon komórkowy (podstawowy)</font>
+                    </font>
+                </label>
+                <input type="text" class="form-control" id="firstName" placeholder="Telefon komórkowy" @bind-value="@model.TelefonKomorkowy" required="">
+                <div class="invalid-feedback">
+                    Telefon jest wymagany
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="lastName">
+                    <font style="vertical-align: inherit;">
+                        <font style="vertical-align: inherit;">Telefon stacjonarny</font>
+                    </font>
+                </label>
+                <input type="text" class="form-control" id="lastName" placeholder="Telefon stacjonarny" @bind-value="@model.TelefonStacjonarny" />
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="email">
+                    <font style="vertical-align: inherit;">
+                        <font style="vertical-align: inherit;">Email </font>
+                    </font>
+                    <span class="text-muted">
+                        <font style="vertical-align: inherit;">
+                            <font style="vertical-align: inherit;">(kontaktowy)</font>
+                        </font>
+                    </span>
+                </label>
+                <input type="email" class="form-control" id="email" placeholder="ty@example.com" @bind-value="@model.Email">
+                <div class="invalid-feedback">
+                    Proszę wprowadzić swój adres E-mail
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <label>
+                    Domyślna waluta cennika
+                </label>
+                <label class="block-label label">
+                    np: PLN
+                </label>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label>
+                    Termin dostawy w dniach
+                </label>
+                <label class="block-label">
+                    np: 10 dni roboczych
+                </label>
+            </div>
+            <div class="col-md-5 mb-3">
+                <label>
+                    Metoda płatności
+                </label>
+                <select class="custom-select d-block w-100" id="country" @onchange="MetodaPlatnosci" required="">
+                    <option value="">
+                        <font style="vertical-align: inherit;">
+                            <font style="vertical-align: inherit;">Wybierz metodę płatności</font>
+                        </font>
+                    </option>
+                    <option>
+                        <font style="vertical-align: inherit;">
+                            <font style="vertical-align: inherit;">Przelewy24</font>
+                        </font>
+                    </option>
+                    <option>
+                        <font style="vertical-align: inherit;">
+                            <font style="vertical-align: inherit;">PayPal</font>
+                        </font>
+                    </option>
+                    <option>
+                        <font style="vertical-align: inherit;">
+                            <font style="vertical-align: inherit;">Płatnośc przy odbiorze</font>
+                        </font>
+                    </option>
+                </select>
+                <div class="invalid-feedback">
+                    Proszę wybrać metodę płatności
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="fv">
+                Płatnik VAT
+            </label>
+            @if (model.PlatnikVAT == true)
+            {
+                <input type="checkbox" checked="checked" class="ui-checkboxradio-icon ui-corner-all ui-icon ui-icon-background ui-icon-blank" @bind-value="@model.PlatnikVAT" id="fv" />
+            }
+            else
+            {
+                <input type="checkbox" class="ui-checkboxradio-icon ui-corner-all ui-icon ui-icon-background ui-icon-blank" @bind-value="@model.PlatnikVAT" id="fv" />
+            }
+        </div>
+        @if (model.PlatnikVAT == true)
+        {
+            <hr class="mb-4 mj24-hr">
+            <table class="col-md-12" style="margin-bottom:5px">
+                <tr>
+                    <td>Nip</td>
+                    <td>Nazwa Firmy</td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="text" class="form-control" id="nip" placeholder="NIP" @bind-value="@model.Nip" />
+                    </td>
+                    <td>
+                        <input type="text" class="form-control" id="companyname" placeholder="Nazwa Firmy" @bind-value="@model.NazwaFirmy" />
+                    </td>
+                </tr>
+            </table>
+
+            <table class="col-md-12" style="margin-bottom:5px">
+                <tr>
+                    <td>ISO</td>
+                    <td>REGON</td>
+                </tr>
+                <tr>
+                    <td>
+                        <select class="custom-select d-block w-100" id="country" @onchange="KrajISO" required="">
+                            <option value="">
+                                <font style="vertical-align: inherit;">
+                                    <font style="vertical-align: inherit;">Wybierz...</font>
+                                </font>
+                            </option>
+                            <option>
+                                <font style="vertical-align: inherit;">
+                                    <font style="vertical-align: inherit;">POL</font>
+                                </font>
+                            </option>
+                            <option>
+                                <font style="vertical-align: inherit;">
+                                    <font style="vertical-align: inherit;">GER</font>
+                                </font>
+                            </option>
+                            <option>
+                                <font style="vertical-align: inherit;">
+                                    <font style="vertical-align: inherit;">CZE</font>
+                                </font>
+                            </option>
+                            <option>
+                                <font style="vertical-align: inherit;">
+                                    <font style="vertical-align: inherit;">FRA</font>
+                                </font>
+                            </option>
+                            <option>
+                                <font style="vertical-align: inherit;">
+                                    <font style="vertical-align: inherit;">ITA</font>
+                                </font>
+                            </option>
+                        </select>
+                        <div class="invalid-feedback">
+                            Proszę wybrać kraj
+                        </div>
+                    </td>
+                    <td>
+                        <input type="text" class="form-control" id="nip" placeholder="NIP" @bind-value="@model.REGON" />
+                    </td>
+                </tr>
+            </table>
+        }
+
+
+        <center>
+            <div class="col-md-3 mb-3">
+                <button type="button" class="btn btn-danger" style="margin-top:32px;" @onclick="Save">Zapisz</button>
+            </div>
+        </center>
+        <hr class="mb-4 mj24-hr" />
+    </form>
+</div>
+
+@code{
+    [CascadingParameter] CartStateProvider CartStateProvider { get; set; }
+    MojeDaneModel model;
+
+    [Authorize(AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme)]
+    protected override void OnInitialized()
+    {
+        try
+        {
+            //pobieranie danych użytkownika i przypisanie ich do modelu
+            model = new MojeDaneModel();
+            //OdbiorcyAdresyDTO adres = new OdbiorcyAdresyDTO();
+
+            var uri = nav.ToAbsoluteUri(nav.Uri);
+            var id = QueryHelpers.ParseQuery(uri.Query).TryGetValue("id", out var idAdresu);
+            if (nav.Uri != $"{nav.BaseUri}mojedane")
+            {
+                var adresy = Client.GetAdresy(CartStateProvider.userModel.UserId);
+                var adres = adresy.Single(c => c.id == Convert.ToInt64(idAdresu));
+
+                model.Id = Convert.ToInt32(idAdresu);
+                model.Imie = adres.podImie;
+                model.Nazwisko = adres.podNaziwsko;
+                model.Miejscowość = adres.podMiejscowosc;
+                model.Ulica = adres.podUlica;
+                model.NumerDomu = adres.podNumerDomu;
+                model.NumerMieszkania = adres.podNumerMieszkania;
+                model.KodPocztowy = adres.podKodPocztowy;
+                model.Email = adres.podEmail;
+                model.TelefonKomorkowy = adres.podTelKom;
+                model.TelefonStacjonarny = adres.podTelStacjonarny;
+                model.Nip = adres.podNip;
+                model.NazwaFirmy = adres.podNazwa;
+                model.REGON = adres.podRegon;
+                model.PlatnikVAT = adres.czynnyPodatnikVat;
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex.Message);
+        }
+    }
+
+    [Authorize(AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme)]
+    public async Task Save()
+    {
+        try
+        {
+            var uri = nav.ToAbsoluteUri(nav.Uri);
+            var id = QueryHelpers.ParseQuery(uri.Query).TryGetValue("id", out var idAdresu);
+            if (nav.Uri != $"{nav.BaseUri}mojedane")
+            {
+                OdbiorcyAdresyDTO adres = new OdbiorcyAdresyDTO()
+                {
+                    id = model.Id,
+                    podEmail = model.Email,
+                    podTelStacjonarny = model.TelefonStacjonarny,
+                    podTelKom = model.TelefonKomorkowy,
+                    podImie = model.Imie,
+                    podNaziwsko = model.Nazwisko,
+                    podUlica = model.Ulica,
+                    podNumerDomu = model.NumerDomu,
+                    podNumerMieszkania = model.NumerMieszkania,
+                    podMiejscowosc = model.Miejscowość,
+                    podKodPocztowy = model.KodPocztowy,
+                    podNip = model.Nip,
+                    podRegon = model.REGON,
+                    podNazwa = model.NazwaFirmy,
+                    czynnyPodatnikVat = model.PlatnikVAT,
+                    podKodKraj = krajISO,
+                };
+                if (adres.czynnyPodatnikVat == null)
+                {
+                    adres.czynnyPodatnikVat = false;
+                }
+                Client.PostCustomerData(adres);
+            }
+            else
+            {
+                OdbiorcyAdresyDTO adres = new OdbiorcyAdresyDTO()
+                {
+                    podEmail = model.Email,
+                    podTelStacjonarny = model.TelefonStacjonarny,
+                    podTelKom = model.TelefonKomorkowy,
+                    podImie = model.Imie,
+                    podNaziwsko = model.Nazwisko,
+                    podUlica = model.Ulica,
+                    podNumerDomu = model.NumerDomu,
+                    podNumerMieszkania = model.NumerMieszkania,
+                    podMiejscowosc = model.Miejscowość,
+                    podKodPocztowy = model.KodPocztowy,
+                    podNip = model.Nip,
+                    podRegon = model.REGON,
+                    podNazwa = model.NazwaFirmy,
+                    czynnyPodatnikVat = model.PlatnikVAT,
+                    idPodmioty = CartStateProvider.userModel.UserId,
+                    podKodKraj = krajISO,
+                };
+                if (adres.czynnyPodatnikVat == null)
+                {
+                    adres.czynnyPodatnikVat = false;
+                }
+                Client.AddCustomerData(adres);
+            }
+            nav.NavigateTo("/mojeadresy", true);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex.Message);
+        }
+    }
+
+    //pobieranie wartości z okna kraje
+    public string kraj;
+    public void Kraj(ChangeEventArgs args)
+    {
+        kraj = args.Value.ToString();
+    }
+
+    public string krajISO;
+    public void KrajISO(ChangeEventArgs args)
+    {
+        krajISO = args.Value.ToString();
+    }
+
+    public string metodaPlatnosci;
+    public void MetodaPlatnosci(ChangeEventArgs args)
+    {
+        metodaPlatnosci = args.Value.ToString();
+    }
+}

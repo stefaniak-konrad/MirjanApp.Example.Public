@@ -1,0 +1,78 @@
+﻿@page "/cookie"
+
+@using Microsoft.AspNetCore.Http.Features;
+@using Microsoft.AspNetCore.Http
+@using Microsoft.AspNetCore.Authentication;
+@using Microsoft.AspNetCore.Authentication.Cookies;
+@using Microsoft.AspNetCore.Authorization
+@using Serilog
+
+@inject HttpContextAccessor httpContext
+@inject IJSRuntime IJSRntime
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    @if (cart.cookieModel.showModal == false)
+    {
+        <div id="cookieConsent" class="alert alert-info-mirjan alert-dismissible fade show col-md-5" role="alert">
+            Ta strona uzywa plików cookie.
+            <div>
+                <button type="button" class="accept-policy close" data-dismiss="alert" aria-label="Close" data-cookie-string="@cookieString" @onclick="AcceptMessage">
+                    <div style="margin-top:-5px">
+                        <span aria-hidden="true" style="font-size:small">Akceptuje</span>
+
+                    </div>
+                </button>
+            </div>
+        </div>
+    }
+
+    @code {
+        [CascadingParameter] CartStateProvider cart { get; set; }
+
+        ITlsConnectionFeature connectionFeature;
+        bool showBanner;
+        string cookieString;
+
+        [Authorize(AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme)]
+        protected override void OnInitialized()
+        {
+            try
+            {
+                if (cart.cookieModel == null || cart.cookieModel.showModal == false)
+                {
+                    var consentFeature = httpContext.HttpContext.Features.Get<ITrackingConsentFeature>();
+                    var showBanner = !consentFeature?.CanTrack ?? false;
+                    var cookieString = consentFeature?.CreateConsentCookie();
+                }
+                else
+                {
+                    cart.cookieModel.showModal = true;
+                    cart.SaveCookie();
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex.Message);
+            }
+        }
+
+        [Authorize(AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme)]
+        private void AcceptMessage()
+        {
+            IJSRntime.InvokeVoidAsync(
+                "netLearnerJsFunctions.acceptMessage",
+                cookieString);
+
+            // utwóż nową pozycje cookie
+            var cookie = new CookieModel
+            {
+                showModal = true
+            };
+            // dodaj do pamięci lokalnej
+            cart.cookieModel = cookie;
+            cart.SaveCookie();
+            Log.Information("Zgoda Cookies została zapisana w pamieci lokalnej");
+            showBanner = true;
+        }
+    }
